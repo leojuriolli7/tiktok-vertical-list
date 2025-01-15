@@ -7,7 +7,7 @@ interface Props {
   threshold?: number;
 }
 
-const VerticalScrollList = ({ children, threshold = 0.2 }: Props) => {
+const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchDelta, setTouchDelta] = useState(0);
