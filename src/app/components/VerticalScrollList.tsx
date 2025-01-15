@@ -1,20 +1,10 @@
-"use client";
-
-import { useState, useRef, ReactNode } from "react";
+import { useState, useRef, ReactNode, useEffect } from "react";
 
 interface Props {
   children: ReactNode[];
   threshold?: number;
 }
 
-/**
- * Starter component for a tiktok vertical list implementation. Key points:
- *
- * - requestAnimationFrame fro smoother animations
- * - Using translate3d for GUP acceleration
- * - will-change attribute
- * - Separated animation state
- */
 const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -23,15 +13,22 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
   const animationRef = useRef<number>(null);
   const deltaRef = useRef(0);
 
+  useEffect(() => {
+    const preventDefault = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", preventDefault, { passive: false });
+
+    return () => document.removeEventListener("touchmove", preventDefault);
+  }, []);
+
   const updatePosition = () => {
     if (!containerRef.current) return;
-
     const offset = -(activeIndex * window.innerHeight + deltaRef.current);
     containerRef.current.style.transform = `translate3d(0, ${offset}px, 0)`;
     animationRef.current = requestAnimationFrame(updatePosition);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     setTouchStart(e.touches[0].clientY);
     setTouchDelta(0);
     deltaRef.current = 0;
@@ -39,12 +36,14 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
     const delta = touchStart - e.touches[0].clientY;
     setTouchDelta(delta);
     deltaRef.current = delta;
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (!containerRef.current) return;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -70,7 +69,7 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden will-change-transform"
+      className="fixed inset-0 overflow-hidden will-change-transform touch-none"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
