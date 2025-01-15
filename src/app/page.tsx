@@ -8,6 +8,7 @@ export default function Home() {
           className="h-full w-full object-cover"
           muted
           controls={false}
+          playsInline
           autoPlay
           src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
         />
@@ -17,6 +18,7 @@ export default function Home() {
           className="h-full w-full object-cover"
           muted
           controls={false}
+          playsInline
           autoPlay
           src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
         />
@@ -26,6 +28,7 @@ export default function Home() {
           className="h-full w-full object-cover"
           muted
           controls={false}
+          playsInline
           autoPlay
           src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
         />
