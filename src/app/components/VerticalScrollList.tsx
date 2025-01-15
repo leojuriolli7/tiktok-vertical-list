@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, ReactNode, useEffect } from "react";
+import { useState, useRef, ReactNode } from "react";
 
 interface Props {
   children: ReactNode[];
@@ -15,22 +15,17 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
   const animationRef = useRef<number>(null);
   const deltaRef = useRef(0);
 
-  useEffect(() => {
-    const preventDefault = (e: TouchEvent) => e.preventDefault();
-    document.addEventListener("touchmove", preventDefault, { passive: false });
-
-    return () => document.removeEventListener("touchmove", preventDefault);
-  }, []);
-
   const updatePosition = () => {
     if (!containerRef.current) return;
-    const offset = -(activeIndex * window.innerHeight + deltaRef.current);
-    containerRef.current.style.transform = `translate3d(0, ${offset}px, 0)`;
+    const offset = -(
+      activeIndex * 100 +
+      (deltaRef.current / window.innerHeight) * 100
+    );
+    containerRef.current.style.transform = `translate3d(0, ${offset}%, 0)`;
     animationRef.current = requestAnimationFrame(updatePosition);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
     setTouchStart(e.touches[0].clientY);
     setTouchDelta(0);
     deltaRef.current = 0;
@@ -38,21 +33,18 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault();
     const delta = touchStart - e.touches[0].clientY;
     setTouchDelta(delta);
     deltaRef.current = delta;
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
+  const handleTouchEnd = () => {
     if (!containerRef.current) return;
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
 
-    const screenHeight = window.innerHeight;
-    const moveThreshold = screenHeight * threshold;
+    const moveThreshold = window.innerHeight * threshold;
 
     const newIndex =
       touchDelta > moveThreshold
@@ -71,7 +63,11 @@ const VerticalScrollList = ({ children, threshold = 0.3 }: Props) => {
 
   return (
     <div
-      className="fixed inset-0 overflow-hidden will-change-transform touch-none"
+      className="fixed inset-0 h-[100dvh] overflow-hidden will-change-transform touch-none"
+      style={{
+        paddingBottom: "env(safe-area-inset-bottom)",
+        height: "-webkit-fill-available",
+      }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
