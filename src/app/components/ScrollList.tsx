@@ -111,6 +111,7 @@ const ScrollList = ({
           className="h-full w-full object-cover"
           style={{ visibility: state === "idle" ? "visible" : "hidden" }}
           muted
+          loop
           controls={false}
           playsInline
           autoPlay
