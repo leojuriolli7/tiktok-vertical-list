@@ -5,9 +5,30 @@ import { useState, useRef, ReactNode } from "react";
 interface Props {
   children: ReactNode[];
   threshold?: number;
+  onSlideStart?: () => void;
+  onSlideEnd?: (idx: number) => void;
+  videoSource?: string;
+  mode: "vertical" | "horizontal";
 }
 
-const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
+const getTranslateString = (value: number, mode: "vertical" | "horizontal") => {
+  if (mode === "vertical") {
+    return `translate3d(0, ${value}%, 0)`;
+  }
+
+  return `translate3d(${value}%, 0, 0)`;
+};
+
+const ScrollList = ({
+  children,
+  threshold = 0.1,
+  videoSource,
+  onSlideEnd,
+  onSlideStart,
+  mode,
+}: Props) => {
+  const [state, setState] = useState<"idle" | "sliding">("idle");
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchDelta, setTouchDelta] = useState(0);
@@ -19,21 +40,27 @@ const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
     if (!containerRef.current) return;
     const offset = -(
       activeIndex * 100 +
-      (deltaRef.current / window.innerHeight) * 100
+      (deltaRef.current /
+        window[mode === "vertical" ? "innerHeight" : "innerWidth"]) *
+        100
     );
-    containerRef.current.style.transform = `translate3d(0, ${offset}%, 0)`;
+    containerRef.current.style.transform = getTranslateString(offset, mode);
     animationRef.current = requestAnimationFrame(updatePosition);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientY);
+    setTouchStart(e.touches[0][mode === "vertical" ? "clientY" : "clientX"]);
     setTouchDelta(0);
     deltaRef.current = 0;
     animationRef.current = requestAnimationFrame(updatePosition);
+
+    setState("sliding");
+    onSlideStart?.();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    const delta = touchStart - e.touches[0].clientY;
+    const delta =
+      touchStart - e.touches[0][mode === "vertical" ? "clientY" : "clientX"];
     setTouchDelta(delta);
     deltaRef.current = delta;
   };
@@ -44,7 +71,8 @@ const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
       cancelAnimationFrame(animationRef.current);
     }
 
-    const moveThreshold = window.innerHeight * threshold;
+    const moveThreshold =
+      window[mode === "vertical" ? "innerHeight" : "innerWidth"] * threshold;
 
     const newIndex =
       touchDelta > moveThreshold
@@ -54,9 +82,11 @@ const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
         : activeIndex;
 
     setActiveIndex(newIndex);
-    containerRef.current.style.transform = `translate3d(0, ${
-      -newIndex * 100
-    }%, 0)`;
+    containerRef.current.style.transform = getTranslateString(
+      -newIndex * 100,
+      mode
+    );
+
     setTouchDelta(0);
     deltaRef.current = 0;
   };
@@ -71,14 +101,32 @@ const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTransitionEnd={() => {
+        onSlideEnd?.(activeIndex);
+        setState("idle");
+      }}
     >
+      <div className="w-full h-full absolute inset-0 z-10">
+        <video
+          className="h-full w-full object-cover"
+          style={{ visibility: state === "idle" ? "visible" : "hidden" }}
+          muted
+          controls={false}
+          playsInline
+          autoPlay
+          src={videoSource}
+        />
+      </div>
+
       <div
         ref={containerRef}
         style={{ transform: `translate3d(0, 0, 0)` }}
-        className="w-full h-full transition-transform duration-300 ease-out"
+        className={`w-full h-full transition-transform duration-300 ease-out ${
+          mode === "horizontal" ? "flex flex-row" : ""
+        }`}
       >
         {children.map((child, index) => (
-          <div key={index} className="w-full h-full">
+          <div key={index} className="w-full h-full flex-shrink-0">
             {child}
           </div>
         ))}
@@ -87,4 +135,4 @@ const VerticalScrollList = ({ children, threshold = 0.1 }: Props) => {
   );
 };
 
-export default VerticalScrollList;
+export default ScrollList;
