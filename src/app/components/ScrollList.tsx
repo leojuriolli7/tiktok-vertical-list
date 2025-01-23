@@ -102,8 +102,10 @@ const ScrollList = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTransitionEnd={() => {
-        onSlideEnd?.(activeIndex);
-        setState("idle");
+        if (deltaRef.current === 0) {
+          onSlideEnd?.(activeIndex);
+          setState("idle");
+        }
       }}
     >
       <div className="w-full h-full absolute inset-0 z-10">
